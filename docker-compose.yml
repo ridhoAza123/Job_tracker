@@ -46,7 +46,7 @@ services:
     container_name: speed_tracker_nginx
     restart: always
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./static:/app/static:ro
