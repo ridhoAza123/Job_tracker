@@ -10,6 +10,7 @@ requests>=2.32
 beautifulsoup4>=4.12
 
 # Vision / detection
+--extra-index-url https://download.pytorch.org/whl/cpu
 opencv-python>=4.9
 numpy>=1.26
 ultralytics>=8.3

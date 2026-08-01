@@ -17,12 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install CPU-only PyTorch first to save disk space (avoid 4GB+ CUDA packages)
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-
-# Install remaining Python dependencies
+# Install Python dependencies using CPU-only index (prevents GPU CUDA download)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu gunicorn
 
 # Copy project files
 COPY . .
