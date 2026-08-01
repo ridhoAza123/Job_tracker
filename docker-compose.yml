@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # 1. Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: speed_tracker_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: speed_detection
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Optional: Auto-import schema if database is newly initialized
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2. Flask Application Container
+  app:
+    build: .
+    container_name: speed_tracker_app
+    restart: always
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - FLASK_DEBUG=0
+      - DATABASE_URL=mysql+pymysql://root:rootpassword@db:3306/speed_detection
+      - YOLO_WEIGHTS_PATH=weights/yolo26m.pt
+      - CCTV_STREAM_URL=https://cctv.banjarbarukota.go.id/CCTV
+    volumes:
+      - ./static:/app/static
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: speed_tracker_nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./static:/app/static:ro
+    depends_on:
+      - app
+
+volumes:
+  mysql_data:
