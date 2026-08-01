@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Speed Tracker AI{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3/dist/apexcharts.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-mark"><i data-lucide="radar" class="icon"></i></div>
+            <div class="brand-text">
+                <div class="brand-title">Speed Tracker AI</div>
+                <div class="brand-subtitle">ITMS Monitoring</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Monitoring</div>
+            <a class="nav-item {{ 'active' if request.path == '/' }}" href="/">
+                <i data-lucide="layout-dashboard" class="icon"></i><span class="label">Dashboard</span>
+            </a>
+            <a class="nav-item" href="/#live-cctv" data-scroll="live-cctv">
+                <i data-lucide="video" class="icon"></i><span class="label">Live CCTV</span>
+            </a>
+            <a class="nav-item {{ 'active' if request.path == '/history' }}" href="/history">
+                <i data-lucide="history" class="icon"></i><span class="label">History</span>
+            </a>
+            <a class="nav-item" href="/#statistics" data-scroll="statistics">
+                <i data-lucide="bar-chart-3" class="icon"></i><span class="label">Statistics</span>
+            </a>
+            <div class="nav-section-label">Configuration</div>
+            <a class="nav-item" href="/#camera-management" data-scroll="camera-management">
+                <i data-lucide="camera" class="icon"></i><span class="label">Camera Management</span>
+            </a>
+            <a class="nav-item" href="#" id="navSettings">
+                <i data-lucide="settings" class="icon"></i><span class="label">Settings</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">Speed Tracker AI &middot; v2.0</div>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="app-main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="Menu">
+                    <i data-lucide="menu" class="icon"></i>
+                </button>
+                <div>
+                    <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+                    <div class="page-subtitle">{% block page_subtitle %}Real-time vehicle speed monitoring{% endblock %}</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="clock-block">
+                    <div class="clock-time" id="headerClock">--:--:--</div>
+                    <div class="clock-date" id="headerDate">-</div>
+                </div>
+                <span class="status-pill" id="pillAi" title="Status model AI">
+                    <span class="status-dot" id="pillAiDot"></span> AI
+                </span>
+                <span class="status-pill" id="pillDb" title="Status database">
+                    <span class="status-dot" id="pillDbDot"></span> DB
+                </span>
+                <span class="status-pill" id="pillCctv" title="Status CCTV">
+                    <span class="status-dot pulse" id="pillCctvDot"></span> CCTV
+                </span>
+            </div>
+        </header>
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- ===================== Settings modal ===================== -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal-panel">
+        <div class="modal-header">
+            <div class="modal-title"><i data-lucide="sliders-horizontal" class="icon"></i> Detection Settings</div>
+            <button class="icon-btn" id="settingsClose"><i data-lucide="x" class="icon"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <div class="field-row">
+                    <span class="field-label">Confidence</span>
+                    <span class="field-value" id="settingsConfValue">0.25</span>
+                </div>
+                <input type="range" id="settingsConfSlider" min="0.10" max="0.90" step="0.05" value="0.25">
+            </div>
+            <div class="field">
+                <div class="field-row">
+                    <span class="field-label">NMS IoU</span>
+                    <span class="field-value" id="settingsIouValue">0.45</span>
+                </div>
+                <input type="range" id="settingsIouSlider" min="0.10" max="0.90" step="0.05" value="0.45">
+            </div>
+            <div class="field">
+                <div class="field-row">
+                    <span class="field-label">Speed Limit</span>
+                    <span class="field-value"><span id="settingsLimitValue">60</span> km/j</span>
+                </div>
+                <input type="range" id="settingsLimitSlider" min="10" max="150" step="5" value="60">
+            </div>
+            <div class="field">
+                <div class="field-row">
+                    <span class="field-label">Auto Preprocessing (CLAHE/Gamma)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="settingsPreprocessToggle" checked>
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="section-title">Runtime Info (read-only)</div>
+            <div class="modal-grid-2">
+                <div class="field">
+                    <div class="field-label" style="margin-bottom:8px;">Model</div>
+                    <div class="readonly-field" id="settingsModelValue">–</div>
+                </div>
+                <div class="field">
+                    <div class="field-label" style="margin-bottom:8px;">Tracker</div>
+                    <div class="readonly-field" id="settingsTrackerValue">–</div>
+                </div>
+                <div class="field">
+                    <div class="field-label" style="margin-bottom:8px;">Resolution</div>
+                    <div class="readonly-field" id="settingsResolutionValue">–</div>
+                </div>
+                <div class="field">
+                    <div class="field-label" style="margin-bottom:8px;">FPS</div>
+                    <div class="readonly-field" id="settingsFpsValue">–</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger-outline" id="settingsResetStats">
+                <i data-lucide="rotate-ccw" class="icon icon-sm"></i> Reset Statistik
+            </button>
+            <button class="btn btn-primary" id="settingsDone">Selesai</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</body>
+</html>

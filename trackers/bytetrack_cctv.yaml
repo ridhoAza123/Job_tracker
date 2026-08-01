@@ -1,0 +1,12 @@
+tracker_type: bytetrack
+# Fallback tracker if trackers/botsort_cctv.yaml fails to construct (see
+# Config.TRACKER_PRIORITY) — no GMC, no ReID surface at all (BYTETracker has
+# no `self.gmc`/`self.encoder`). Kept consistent with botsort_cctv.yaml on
+# every parameter it shares, including the recall re-tuning of
+# track_high_thresh/new_track_thresh — see that file's notes for why.
+track_high_thresh: 0.12
+track_low_thresh: 0.10
+new_track_thresh: 0.15
+track_buffer: 100
+match_thresh: 0.65
+fuse_score: True

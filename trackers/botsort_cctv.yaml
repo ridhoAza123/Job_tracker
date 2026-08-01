@@ -1,0 +1,84 @@
+tracker_type: botsort
+
+# --- HISTORY -------------------------------------------------------------
+# An earlier "accuracy-first" pass raised track_buffer/match_thresh and
+# turned on ReID (with_reid + a real yolo26s-reid.onnx model), reasoning
+# purely from theory. Real production telemetry showed ReID adds a second
+# model pass per raw detected box, and combined with a lowered detector
+# confidence floor (more raw boxes) it was a direct, measured contributor to
+# inference climbing from ~600-800ms to 2000-8000+ms per cycle (see
+# config.py's DETECTION_CONFIDENCE note). ReID/track_buffer/match_thresh are
+# reverted here to the values proven to work in production. gmc_method is
+# kept regardless — unrelated to inference cost, its own dedicated
+# benchmark showed zero detection-quality impact.
+#
+# track_high_thresh/track_low_thresh/new_track_thresh, below, were then
+# RE-tuned on top of that reverted baseline — lowered again, but this time
+# verified directly against real recorded footage (see each parameter's own
+# note) rather than assumed, and without reintroducing ReID or raising
+# imgsz back to the value that caused the earlier regression.
+
+# track_high_thresh: minimum confidence to enter the first-pass association
+#   set — this is ALSO the minimum confidence eligible to spawn a brand-new
+#   track at all (a detection below this can only ever recover an existing
+#   track via the low-confidence tier below, never create a new one). Set to
+#   just above Config.DETECTION_CONFIDENCE (0.10): verified directly (not
+#   assumed) that leaving this at a higher value silently drops real
+#   vehicles at the *tracker* stage even when YOLO finds them fine — on one
+#   real test frame with two clearly-visible motorcycles at 0.13/0.16
+#   confidence, track_high_thresh=0.25 activated only 5 of 17 real
+#   detections into tracks (motorcycles included); track_high_thresh=0.12
+#   activated 11 of the same 17, including both motorcycles.
+track_high_thresh: 0.12
+# track_low_thresh: minimum confidence to enter the second-pass set,
+#   recovering already-tracked vehicles by IoU alone (never spawns new
+#   tracks). Set to equal Config.DETECTION_CONFIDENCE (0.10) — the entire
+#   detector output above the floor is usable for keeping an existing
+#   vehicle alive through a rough frame.
+track_low_thresh: 0.10
+# new_track_thresh: minimum confidence for an unmatched high-tier detection
+#   to spawn a brand-new track ID. Lowered alongside track_high_thresh for
+#   the same directly-verified reason above — a new vehicle's very first
+#   detection (motorcycles especially, at night) is often well below the
+#   old 0.30, and rejecting it here means it never gets a track at all, no
+#   matter how many later frames re-detect it.
+new_track_thresh: 0.15
+
+# track_buffer: how many processed frames a lost track is kept around,
+#   hoping to be re-matched, before being dropped for good.
+track_buffer: 100
+# match_thresh: max allowed IoU-based assignment cost (roughly `1 - IoU`,
+#   optionally fused with detection score) for the first-pass linear
+#   assignment; a pair costlier than this is left unmatched.
+match_thresh: 0.65
+fuse_score: True
+
+# --- Global Motion Compensation --------------------------------------------
+# All cameras on this deployment are fixed/static CCTV — there is no camera
+# pan/tilt/zoom motion for Global Motion Compensation to correct for, so it
+# is pure overhead. It was also the source of "GMC failed, falling back to
+# identity" / SparsePyrLKOpticalFlow assertion warnings whenever a stream
+# reconnect silently changed frame resolution between calls (the optical
+# flow step compares the current frame against a cached previous one and
+# requires identical dimensions). Disabling it removes that failure mode
+# entirely while leaving Kalman filter + IoU association untouched. This
+# fix is independent of the ReID/threshold regression above (zero inference
+# cost either way, dedicated before/after benchmark showed no detection-
+# quality change) and is kept.
+gmc_method: none
+
+# --- Appearance re-identification (ReID) — TRIED, REVERTED -----------------
+# with_reid was turned on with an explicit ONNX ReID model (yolo26s-reid.onnx
+# — `model: auto` does nothing with this project's standalone, non-
+# `model.track()` tracker usage, since the encoder needs backbone features
+# this pipeline never extracts). It ran correctly, but every detected box
+# in every frame paid a second model forward pass for it, and that was a
+# direct, measured contributor to the inference-time regression documented
+# above. Reverted to off. proximity_thresh/appearance_thresh are left in
+# place (inert while with_reid is False) in case ReID is revisited later —
+# if so, benchmark it against the live app under real load, not an isolated
+# detector loop, which is what hid this cost the first time.
+proximity_thresh: 0.4
+appearance_thresh: 0.8
+with_reid: False
+model: auto

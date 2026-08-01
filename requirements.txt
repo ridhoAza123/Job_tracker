@@ -1,0 +1,29 @@
+# Web
+Flask>=3.1
+Flask-SQLAlchemy>=3.1
+SQLAlchemy>=2.0
+PyMySQL>=1.1
+python-dotenv>=1.0
+
+# Crawling
+requests>=2.32
+beautifulsoup4>=4.12
+
+# Vision / detection
+opencv-python>=4.9
+numpy>=1.26
+ultralytics>=8.3
+torch>=2.2
+torchvision>=0.17
+
+# Used by the ByteTrack/BoTSORT association step
+lap>=0.5
+
+# CPU% reporting (services/pipeline.py, informational only)
+psutil>=5.9
+
+# Optional: only needed if trackers/botsort_cctv.yaml's with_reid is turned
+# back on (currently False — reverted, see that file's regression note).
+# Harmless to leave installed either way.
+onnx>=1.16
+onnxruntime>=1.18

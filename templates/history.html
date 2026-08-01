@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+{% block title %}History · Speed Tracker AI{% endblock %}
+{% block page_title %}History{% endblock %}
+{% block page_subtitle %}Riwayat deteksi kendaraan tersimpan{% endblock %}
+{% block content %}
+
+<section class="card slide-up">
+    <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+        <div class="card-header-title"><i data-lucide="history" class="icon"></i> Riwayat Deteksi</div>
+        <div class="filter-bar">
+            <div class="search-box">
+                <i data-lucide="search" class="icon icon-sm"></i>
+                <input id="searchInput" class="search-input" placeholder="Cari jenis / kamera / status…" autocomplete="off">
+            </div>
+            <select id="filterType" class="select-field">
+                <option value="">Semua Jenis</option>
+                <option value="Mobil">Mobil</option>
+                <option value="Motor">Motor</option>
+                <option value="Bus">Bus</option>
+                <option value="Truk">Truk</option>
+            </select>
+            <select id="filterStatus" class="select-field">
+                <option value="">Semua Status</option>
+                <option value="Normal">Normal</option>
+                <option value="Overspeed">Overspeed</option>
+                <option value="Measuring">Measuring</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Track</th><th>Jenis</th><th>Kecepatan</th><th>Status</th>
+                    <th>Kamera</th><th>Stream URL</th><th>Waktu</th><th>Foto</th>
+                </tr>
+            </thead>
+            <tbody id="historyTable">
+                <tr class="empty-row"><td colspan="9">Memuat data…</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination-bar">
+        <span id="historySummary">–</span>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</section>
+{% endblock %}

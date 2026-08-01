@@ -1,0 +1,252 @@
+{% extends 'layout.html' %}
+{% block title %}Dashboard · Speed Tracker AI{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Real-time vehicle speed monitoring{% endblock %}
+{% block content %}
+
+<!-- ===================== KPI ===================== -->
+<section class="kpi-grid fade-in" id="kpiGrid">
+    <div class="kpi-card accent-primary">
+        <div class="kpi-icon-bg"><i data-lucide="car" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="car" class="icon icon-sm"></i> Total Vehicle</div>
+        <div class="kpi-value"><span id="kpiTotal">0</span></div>
+    </div>
+    <div class="kpi-card accent-danger">
+        <div class="kpi-icon-bg"><i data-lucide="alert-triangle" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="alert-triangle" class="icon icon-sm"></i> Overspeed</div>
+        <div class="kpi-value"><span id="kpiOverspeed">0</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-bg"><i data-lucide="gauge" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="gauge" class="icon icon-sm"></i> Average Speed</div>
+        <div class="kpi-value"><span id="kpiAvgSpeed">0</span><span class="unit">km/j</span></div>
+    </div>
+    <div class="kpi-card accent-success">
+        <div class="kpi-icon-bg"><i data-lucide="activity" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="activity" class="icon icon-sm"></i> Current FPS</div>
+        <div class="kpi-value"><span id="kpiFps">0</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-bg"><i data-lucide="timer" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="timer" class="icon icon-sm"></i> Inference Time</div>
+        <div class="kpi-value"><span id="kpiInference">0</span><span class="unit">ms</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-bg"><i data-lucide="cpu" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="cpu" class="icon icon-sm"></i> CPU Usage</div>
+        <div class="kpi-value kpi-na" id="kpiCpu" title="Tidak tersedia dari server">–</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-bg"><i data-lucide="server" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="server" class="icon icon-sm"></i> GPU Usage</div>
+        <div class="kpi-value kpi-na" id="kpiGpu" title="Tidak tersedia dari server">–</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-bg"><i data-lucide="expand" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="expand" class="icon icon-sm"></i> Camera Resolution</div>
+        <div class="kpi-value" style="font-size:20px;" id="kpiResolution">–</div>
+    </div>
+    <div class="kpi-card accent-primary">
+        <div class="kpi-icon-bg"><i data-lucide="calendar-check" class="icon"></i></div>
+        <div class="kpi-label"><i data-lucide="calendar-check" class="icon icon-sm"></i> Vehicle Today</div>
+        <div class="kpi-value"><span id="kpiToday">0</span></div>
+    </div>
+</section>
+
+<div class="content-grid" style="margin-top: 20px;">
+    <!-- ===================== MAIN COLUMN ===================== -->
+    <div class="content-main">
+
+        <!-- Live CCTV -->
+        <section class="card video-card slide-up" id="live-cctv">
+            <div class="card-header">
+                <div class="card-header-title"><i data-lucide="video" class="icon"></i> Live CCTV</div>
+                <span class="status-pill" id="videoStatusPill">
+                    <span class="status-dot" id="videoStatusDot"></span>
+                    <span id="videoStatusText">CONNECTING</span>
+                </span>
+            </div>
+            <div class="video-toolbar" id="videoToolbar">
+                <button class="tool-btn" id="btnDrawRoi" title="Gambar area ROI">
+                    <i data-lucide="crop" class="icon icon-sm"></i><span class="label">Draw ROI</span>
+                </button>
+                <button class="tool-btn" id="btnEntryLine" title="Gambar garis masuk">
+                    <i data-lucide="log-in" class="icon icon-sm"></i><span class="label">Entry Line</span>
+                </button>
+                <button class="tool-btn" id="btnExitLine" title="Gambar garis keluar">
+                    <i data-lucide="log-out" class="icon icon-sm"></i><span class="label">Exit Line</span>
+                </button>
+                <button class="tool-btn" id="btnResetRoi" title="Hapus ROI &amp; garis">
+                    <i data-lucide="rotate-ccw" class="icon icon-sm"></i><span class="label">Reset ROI</span>
+                </button>
+                <button class="tool-btn" id="btnCapture" title="Simpan snapshot ke server">
+                    <i data-lucide="aperture" class="icon icon-sm"></i><span class="label">Capture</span>
+                </button>
+                <button class="tool-btn" id="btnRefreshStream" title="Sambungkan ulang video">
+                    <i data-lucide="refresh-cw" class="icon icon-sm"></i><span class="label">Refresh Stream</span>
+                </button>
+                <button class="tool-btn" id="btnScreenshot" title="Unduh screenshot (lokal)">
+                    <i data-lucide="image-down" class="icon icon-sm"></i><span class="label">Screenshot</span>
+                </button>
+                <button class="tool-btn" id="btnFullscreen" title="Fullscreen">
+                    <i data-lucide="maximize" class="icon icon-sm"></i><span class="label">Fullscreen</span>
+                </button>
+            </div>
+            <div class="video-shell" id="videoShell">
+                <div class="video-overlay-bar" id="videoOverlayBar">
+                    <span class="ov-chip"><span class="dot" id="ovStatusDot"></span><span id="ovName">–</span></span>
+                    <span class="ov-chip"><span class="k">Status</span> <span id="ovStatus">–</span></span>
+                    <span class="ov-chip"><span class="k">FPS</span> <span id="ovFps">–</span></span>
+                    <span class="ov-chip"><span class="k">Model</span> <span id="ovModel">–</span></span>
+                    <span class="ov-chip"><span class="k">Tracker</span> <span id="ovTracker">–</span></span>
+                    <span class="ov-chip"><span class="k">Conf</span> <span id="ovConfidence">–</span></span>
+                    <span class="ov-chip"><span class="k">Infer</span> <span id="ovInference">–</span></span>
+                    <span class="ov-chip"><span class="k">Res</span> <span id="ovResolution">–</span></span>
+                    <span class="ov-chip"><span class="k">Stream</span> <span id="ovStreamType">–</span></span>
+                </div>
+                <img id="liveVideo" src="/stream" alt="Live CCTV Stream" crossorigin="anonymous">
+                <canvas id="roiCanvas"></canvas>
+                <div class="video-watermark">Speed Tracker AI</div>
+            </div>
+            <div class="roi-hint hidden" id="roiHint"></div>
+            <div class="info-alert" id="crossingInfo"></div>
+        </section>
+
+        <!-- Charts -->
+        <section class="charts-grid" id="statistics">
+            <div class="card chart-card slide-up">
+                <div class="card-header">
+                    <div class="card-header-title"><i data-lucide="pie-chart" class="icon"></i> Vehicle Composition</div>
+                </div>
+                <div class="card-body"><div id="chartVehicleType"></div></div>
+            </div>
+            <div class="card chart-card slide-up">
+                <div class="card-header">
+                    <div class="card-header-title"><i data-lucide="trending-up" class="icon"></i> Speed Trend</div>
+                </div>
+                <div class="card-body"><div id="chartSpeedTrend"></div></div>
+            </div>
+            <div class="card chart-card slide-up">
+                <div class="card-header">
+                    <div class="card-header-title"><i data-lucide="activity" class="icon"></i> Traffic Density</div>
+                </div>
+                <div class="card-body"><div id="chartTrafficDensity"></div></div>
+            </div>
+            <div class="card chart-card slide-up">
+                <div class="card-header">
+                    <div class="card-header-title"><i data-lucide="gauge" class="icon"></i> Overspeed Ratio</div>
+                </div>
+                <div class="card-body"><div id="chartOverspeedRatio"></div></div>
+            </div>
+            <div class="card chart-card wide slide-up">
+                <div class="card-header">
+                    <div class="card-header-title"><i data-lucide="bar-chart-3" class="icon"></i> Jam Sibuk (Traffic by Hour)</div>
+                </div>
+                <div class="card-body"><div id="chartBusyHours"></div></div>
+            </div>
+        </section>
+
+        <!-- Recent detections -->
+        <section class="card slide-up">
+            <div class="card-header">
+                <div class="card-header-title"><i data-lucide="list" class="icon"></i> Recent Detection</div>
+                <span class="badge badge-primary"><i data-lucide="radio" class="icon icon-sm"></i> Live</span>
+            </div>
+            <div class="table-wrap table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th><th>Vehicle ID</th><th>Vehicle Type</th><th>Speed</th>
+                            <th>Status</th><th>Lane</th><th>Direction</th><th>Camera</th><th>Snapshot</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentDetectionTable">
+                        <tr class="empty-row"><td colspan="9">Memuat data…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===================== RIGHT PANEL ===================== -->
+    <aside class="content-side">
+        <!-- Camera information -->
+        <section class="card slide-up">
+            <div class="card-header">
+                <div class="card-header-title"><i data-lucide="info" class="icon"></i> Camera Information</div>
+            </div>
+            <div class="card-body">
+                <dl class="info-list">
+                    <dt>Name</dt><dd id="ciName">–</dd>
+                    <dt>Status</dt><dd id="ciStatus">–</dd>
+                    <dt>Resolution</dt><dd id="ciResolution">–</dd>
+                    <dt>Stream Type</dt><dd id="ciStreamType">–</dd>
+                    <dt>Stream URL</dt><dd class="url-text" id="ciUrl">–</dd>
+                </dl>
+                <div class="info-alert" id="ciReasonAlert"></div>
+            </div>
+        </section>
+
+        <!-- Camera selection -->
+        <section class="card slide-up" id="camera-management">
+            <div class="card-header">
+                <div class="card-header-title"><i data-lucide="camera" class="icon"></i> Camera Selection</div>
+                <span class="badge badge-neutral" id="cameraCountBadge">0</span>
+            </div>
+            <div class="card-body">
+                <div class="search-box">
+                    <i data-lucide="search" class="icon icon-sm"></i>
+                    <input class="search-input" id="cameraSearchInput" placeholder="Cari kamera…" autocomplete="off">
+                </div>
+                <div class="camera-list" id="cameraList">
+                    <div class="loading-panel"><div class="spinner"></div> Memindai portal CCTV…</div>
+                </div>
+                <div class="camera-list-footer">
+                    <span id="cameraListSummary">–</span>
+                    <button class="btn btn-ghost btn-sm" id="btnRefreshCameras">
+                        <i data-lucide="refresh-cw" class="icon icon-sm"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live detection mini -->
+        <section class="card slide-up">
+            <div class="card-header">
+                <div class="card-header-title"><i data-lucide="scan-eye" class="icon"></i> Live Detection</div>
+                <span class="badge badge-neutral" id="liveDetectionCount">0</span>
+            </div>
+            <div class="card-body">
+                <div class="mini-list" id="liveDetectionList">
+                    <div class="loading-panel" style="padding:20px;"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System status -->
+        <section class="card slide-up">
+            <div class="card-header">
+                <div class="card-header-title"><i data-lucide="server-cog" class="icon"></i> System Status</div>
+            </div>
+            <div class="card-body">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                    <span class="status-dot pulse" id="ssStatusDot"></span>
+                    <span style="font-size:16px; font-weight:800;" id="ssStatusText">CONNECTING</span>
+                </div>
+                <dl class="info-list">
+                    <dt>Current Camera</dt><dd id="ssCamera">–</dd>
+                    <dt>Resolution</dt><dd id="ssResolution">–</dd>
+                    <dt>FPS</dt><dd id="ssFps">–</dd>
+                    <dt>Inference</dt><dd id="ssInference">–</dd>
+                    <dt>Tracker</dt><dd id="ssTracker">–</dd>
+                    <dt>Model</dt><dd id="ssModel">–</dd>
+                    <dt>Database</dt><dd id="ssDatabase">–</dd>
+                    <dt>Stream</dt><dd class="url-text" id="ssStream">–</dd>
+                    <dt>Latency</dt><dd id="ssLatency">–</dd>
+                    <dt>Uptime</dt><dd id="ssUptime">–</dd>
+                </dl>
+            </div>
+        </section>
+    </aside>
+</div>
+{% endblock %}
