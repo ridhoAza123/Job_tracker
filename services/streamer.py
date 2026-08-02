@@ -318,14 +318,11 @@ class Streamer:
         was_reconnecting = self.reconnect_attempt > 0
         capture = None
         try:
-            capture = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
-            if not capture.isOpened():
-                capture.release()
+            if '.m3u8' in url.lower() or url.startswith(('http://', 'https://')):
+                from hls_stream import CCTVStream
+                capture = CCTVStream(url, width=1280, height=720).open()
+            else:
                 capture = cv2.VideoCapture(url)
-            try:
-                capture.set(cv2.CAP_PROP_BUFFERSIZE, CAPTURE_BUFFERSIZE)
-            except Exception:
-                pass
             opened = capture.isOpened()
         except Exception as error:
             self.last_error = f'{type(error).__name__}: {error}'
@@ -341,10 +338,10 @@ class Streamer:
             self._backoff(url)
             return None
 
-        self.width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
-        self.height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
-        fps = capture.get(cv2.CAP_PROP_FPS) or 0.0
-        self.source_fps = fps if 0 < fps < 121 else 0.0
+        self.width = getattr(capture, 'width', 1280) or int(capture.get(cv2.CAP_PROP_FRAME_WIDTH) or 1280)
+        self.height = getattr(capture, 'height', 720) or int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT) or 720)
+        fps = getattr(capture, 'source_fps', 20.0) or (capture.get(cv2.CAP_PROP_FPS) if hasattr(capture, 'get') else 20.0) or 20.0
+        self.source_fps = fps if 0 < fps < 121 else 20.0
         self.reconnect_attempt = 0
         self.connected_at = time.time()
         self.last_error = None
