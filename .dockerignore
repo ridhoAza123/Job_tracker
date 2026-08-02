@@ -1,0 +1,13 @@
+.git
+.gitignore
+.claude
+.env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+logs/*
+static/snapshot/*
+.vscode
+.idea
