@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED=1
 # Install system dependencies required for OpenCV and PyTorch
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    ffmpeg \
     libgl1 \
     libglib2.0-0 \
     libsm6 \
