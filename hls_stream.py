@@ -112,7 +112,6 @@ class CCTVStream:
             "-user_agent", self.user_agent,
             "-headers", f"Referer: {self.referer}\r\n",
             # Redirect & timeout
-            "-follow_redirects", "1",
             "-rw_timeout", str(self.timeout * 1_000_000),
             # Reconnect kalau stream putus di tengah
             "-reconnect", "1",
