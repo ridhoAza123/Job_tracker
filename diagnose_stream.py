@@ -1,9 +1,4 @@
-"""
-Script diagnosa stream CCTV — jalankan DI DALAM container app.
-Cara pakai:
-    docker compose cp diagnose_stream.py app:/app/
-    docker compose exec app python diagnose_stream.py
-"""
+"""Script diagnosa stream CCTV — dijalankan DI DALAM container app."""
 import os
 import subprocess
 import sys
@@ -18,13 +13,11 @@ URL = os.getenv(
 print("=" * 70)
 print("1. CEK BUILD OPENCV — apakah FFmpeg aktif?")
 print("=" * 70)
-info = cv2.getBuildInformation()
-for line in info.splitlines():
+for line in cv2.getBuildInformation().splitlines():
     if any(k in line for k in ("FFMPEG", "avcodec", "avformat", "GStreamer")):
         print("   ", line.strip())
 
-print()
-print("=" * 70)
+print("\n" + "=" * 70)
 print("2. CEK KONEKTIVITAS HTTP ke server CCTV")
 print("=" * 70)
 try:
@@ -38,13 +31,10 @@ try:
 except Exception as e:
     print("    GAGAL:", e)
 
-print()
-print("   Isi playlist (10 baris pertama):")
+print("\n   Isi playlist (10 baris pertama):")
 try:
-    out = subprocess.run(
-        ["curl", "-sS", "--max-time", "15", URL],
-        capture_output=True, text=True, timeout=30,
-    )
+    out = subprocess.run(["curl", "-sS", "--max-time", "15", URL],
+                         capture_output=True, text=True, timeout=30)
     body = out.stdout.strip()
     if body:
         for line in body.splitlines()[:10]:
@@ -54,9 +44,8 @@ try:
 except Exception as e:
     print("    GAGAL:", e)
 
-print()
-print("=" * 70)
-print("3. CEK FFPROBE (ffmpeg sistem) — bisa baca stream?")
+print("\n" + "=" * 70)
+print("3. CEK FFPROBE (ffmpeg sistem)")
 print("=" * 70)
 try:
     out = subprocess.run(
@@ -70,8 +59,7 @@ try:
 except Exception as e:
     print("    GAGAL:", e)
 
-print()
-print("=" * 70)
+print("\n" + "=" * 70)
 print("4. CEK cv2.VideoCapture — dengan dan tanpa capture options")
 print("=" * 70)
 
@@ -88,16 +76,12 @@ def coba(label, opts=None):
     cap.release()
     shape = frame.shape if (ok and frame is not None) else None
     print(f"    [{label}] isOpened={opened} read_ok={ok} shape={shape}")
-    return ok
 
 coba("default")
-coba(
-    "with_headers",
-    "user_agent;Mozilla/5.0 (Windows NT 10.0; Win64; x64)|"
-    "referer;https://cctv.banjarbarukota.go.id/|"
-    "rw_timeout;15000000|timeout;15000000",
-)
+coba("with_headers",
+     "user_agent;Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36|"
+     "referer;https://cctv.banjarbarukota.go.id/|"
+     "rw_timeout;15000000|timeout;15000000")
 
-print()
-print("Selesai. Kirimkan seluruh output ini untuk analisa lanjutan.")
 sys.exit(0)

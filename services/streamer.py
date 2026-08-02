@@ -43,14 +43,16 @@ logger = logging.getLogger(__name__)
 # have no new segment ready.
 os.environ.setdefault(
     'OPENCV_FFMPEG_CAPTURE_OPTIONS',
-    'analyzeduration;1000000'
+    'user_agent;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    '|referer;https://cctv.banjarbarukota.go.id/'
+    '|analyzeduration;1000000'
     '|probesize;1000000'
     '|reconnect;1'
     '|reconnect_streamed;1'
     '|reconnect_at_eof;1'
-    '|reconnect_delay_max;2'
-    '|timeout;10000000'
-    '|rw_timeout;10000000',
+    '|reconnect_delay_max;5'
+    '|timeout;15000000'
+    '|rw_timeout;15000000',
 )
 CAPTURE_BUFFERSIZE = 8
 
