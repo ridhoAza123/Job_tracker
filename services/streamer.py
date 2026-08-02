@@ -317,6 +317,9 @@ class Streamer:
         capture = None
         try:
             capture = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
+            if not capture.isOpened():
+                capture.release()
+                capture = cv2.VideoCapture(url)
             try:
                 capture.set(cv2.CAP_PROP_BUFFERSIZE, CAPTURE_BUFFERSIZE)
             except Exception:
